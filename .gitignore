@@ -41,3 +41,7 @@ example
 # generated native folders
 /ios
 /android
+
+# Heavy assets not used in the app
+"assets/images/LOGO ALIMENTIS NELLA 1.png"
+"assets/images/PLANTILLAS APP.png"
