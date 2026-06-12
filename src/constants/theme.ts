@@ -7,20 +7,39 @@ import '@/global.css';
 
 import { Platform } from 'react-native';
 
+export const NellaColors = {
+  red: '#8B0000',
+  gold: '#C8901A',
+  cream: '#FBF3E2',
+  creamDark: '#F0E4C8',
+  titleDark: '#1C1C1E',
+  subtitleGray: '#3D3D3D',
+  bodyGray: '#6B6B6B',
+  lightGray: '#9A9A9A',
+} as const;
+
+export const NellaFonts = {
+  // Crimson Pro — títulos, nombres de productos, textos principales
+  display:        'CrimsonPro_700Bold_Italic',   // títulos principales
+  bold:           'CrimsonPro_700Bold',           // énfasis sin itálica
+  italic:         'CrimsonPro_400Regular_Italic', // subtítulos en itálica
+  regular:        'CrimsonPro_400Regular',        // body / descripciones
+} as const;
+
 export const Colors = {
   light: {
-    text: '#000000',
-    background: '#ffffff',
-    backgroundElement: '#F0F0F3',
-    backgroundSelected: '#E0E1E6',
-    textSecondary: '#60646C',
+    text: NellaColors.bodyGray,
+    background: '#FBF3E2',
+    backgroundElement: '#EDE0C8',
+    backgroundSelected: '#E5D5B0',
+    textSecondary: NellaColors.lightGray,
   },
   dark: {
-    text: '#ffffff',
-    background: '#000000',
-    backgroundElement: '#212225',
-    backgroundSelected: '#2E3135',
-    textSecondary: '#B0B4BA',
+    text: '#E8E8E8',
+    background: '#1A1008',
+    backgroundElement: '#2C200E',
+    backgroundSelected: '#3D2E14',
+    textSecondary: '#9A9A9A',
   },
 } as const;
 

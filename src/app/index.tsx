@@ -1,98 +1,223 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
+import { Image } from 'expo-image';
+import { Redirect, router } from 'expo-router';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { NellaColors, NellaFonts } from '@/constants/theme';
+import { NellaHeader } from '@/components/nella-header';
+import { useAuthUser } from '@/hooks/useAuthUser';
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
-  }
-  if (Device.isDevice) {
+const FEATURES = [
+  { image: require('@/assets/images/Pancitos Baguette Parmesano.png'), label: 'Calidad' },
+  { image: require('@/assets/images/Pancitos Baguette Oregano.png'),   label: 'Frescura' },
+  { image: require('@/assets/images/Pancitos Dulces Chips Chocolate.png'), label: 'Sabor' },
+  { image: require('@/assets/images/Pizza Margarita.png'),             label: 'Confianza' },
+];
+
+export default function WelcomeScreen() {
+  const { user, loading } = useAuthUser();
+
+  if (loading) {
     return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
+      <SafeAreaView style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={NellaColors.red} />
+      </SafeAreaView>
     );
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+
+  if (user) return <Redirect href="/(tabs)/home" />;
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
-  );
-}
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
+    <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}
+        bounces={false}
+      >
+        {/* Banner principal de productos */}
+        <View style={styles.bannerWrapper}>
+          <Image
+            source={require('@/assets/images/banner principal app.png')}
+            style={styles.bannerImage}
+            contentFit="contain"
           />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
+        </View>
 
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
+        {/* Iconos: Calidad / Frescura / Sabor / Confianza */}
+        <View style={styles.featuresRow}>
+          {FEATURES.map((f) => (
+            <View key={f.label} style={styles.featureBadge}>
+              <View style={styles.featureCircle}>
+                <Image source={f.image} style={styles.featureImg} contentFit="cover" />
+              </View>
+              <Text style={styles.featureLabel}>{f.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* Título y subtítulo */}
+        <View style={styles.textBlock}>
+          <Text style={styles.headline}>
+            Productos congelados{'\n'}listos para hornear
+          </Text>
+          <Text style={styles.subtitle}>
+            Calidad, frescura y sabor en cada producto.
+          </Text>
+        </View>
+
+        {/* Botones */}
+        <View style={styles.actions}>
+          <Pressable
+            style={({ pressed }) => [styles.btnPrimary, pressed && styles.btnPressed]}
+            onPress={() => router.push('/login')}
+          >
+            <Text style={styles.btnPrimaryText}>Iniciar Sesión</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.btnSecondary, pressed && styles.btnPressed]}
+            onPress={() => router.push('/register')}
+          >
+            <Text style={styles.btnSecondaryText}>Crear Cuenta</Text>
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [styles.linkBtn, pressed && styles.btnPressed]}
+            onPress={() => router.replace('/(tabs)/home')}
+          >
+            <Text style={styles.linkText}>Explorar como invitado</Text>
+          </Pressable>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: 'transparent',
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingTop: 0,
+    paddingBottom: 36,
+  },
+
+  // Banner
+  bannerWrapper: {
+    marginHorizontal: 0,
+    marginTop: 0,
+    marginBottom: -32,
+  },
+  bannerImage: {
+    width: '100%',
+    aspectRatio: 1.05,
+  },
+
+  // Feature badges
+  featuresRow: {
     flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 16,
+    paddingTop: 0,
+    paddingBottom: 6,
   },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
+  featureBadge: {
     alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
+    gap: 5,
     flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
   },
-  title: {
+  featureCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    overflow: 'hidden',
+    borderWidth: 2,
+    borderColor: NellaColors.gold,
+  },
+  featureImg: {
+    width: '100%',
+    height: '100%',
+  },
+  featureLabel: {
+    fontFamily: NellaFonts.display,
+    fontSize: 13,
+    color: NellaColors.red,
     textAlign: 'center',
   },
-  code: {
-    textTransform: 'uppercase',
+
+  // Texto
+  textBlock: {
+    alignItems: 'center',
+    paddingHorizontal: 22,
+    paddingBottom: 16,
+    gap: 7,
   },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
+  headline: {
+    fontFamily: NellaFonts.display,
+    fontSize: 32,
+    color: NellaColors.red,
+    textAlign: 'center',
+    lineHeight: 40,
+  },
+  subtitle: {
+    fontFamily: NellaFonts.italic,
+    fontSize: 20,
+    color: NellaColors.gold,
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+
+  // Botones
+  actions: {
+    paddingHorizontal: 20,
+    gap: 11,
+  },
+  btnPrimary: {
+    backgroundColor: NellaColors.red,
+    borderRadius: 13,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: NellaColors.red,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 7,
+    elevation: 4,
+  },
+  btnPrimaryText: {
+    fontFamily: NellaFonts.display,
+    color: '#FFFFFF',
+    fontSize: 18,
+    letterSpacing: 0.4,
+  },
+  btnSecondary: {
+    backgroundColor: 'transparent',
+    borderRadius: 13,
+    height: 52,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: NellaColors.red,
+  },
+  btnSecondaryText: {
+    fontFamily: NellaFonts.display,
+    color: NellaColors.red,
+    fontSize: 18,
+    letterSpacing: 0.4,
+  },
+  btnPressed: {
+    opacity: 0.72,
+  },
+  linkBtn: {
+    alignItems: 'center',
+    paddingVertical: 6,
+  },
+  linkText: {
+    fontFamily: NellaFonts.bold,
+    color: '#000000',
+    fontSize: 16,
+    textDecorationLine: 'underline',
   },
 });

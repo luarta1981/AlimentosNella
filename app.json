@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.alimentosnella.AlimentosNella"
     },
     "web": {
       "output": "static",
@@ -26,12 +27,22 @@
     "plugins": [
       "expo-router",
       [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/LOGO SIN FONDO.png",
+          "color": "#8B0000",
+          "sounds": []
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
+          "backgroundColor": "#FBF3E2",
+          "image": "./assets/images/LOGO SIN FONDO.png",
+          "imageWidth": 280,
           "android": {
-            "image": "./assets/images/splash-icon.png",
-            "imageWidth": 76
+            "image": "./assets/images/LOGO SIN FONDO.png",
+            "imageWidth": 280
           }
         }
       ]
@@ -39,6 +50,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "5d5bb90b-e805-4604-bd2f-380e95c24f4e"
+      }
     }
   }
 }

@@ -1,46 +1,50 @@
 import { Image } from 'expo-image';
-import { useState } from 'react';
-import { Dimensions, StyleSheet, View } from 'react-native';
-import Animated, { Easing, Keyframe } from 'react-native-reanimated';
-import { scheduleOnRN } from 'react-native-worklets';
+import { useEffect, useRef, useState } from 'react';
+import { Animated, Dimensions, StyleSheet, View } from 'react-native';
+import ReAnimated, { Easing, Keyframe } from 'react-native-reanimated';
 
 const INITIAL_SCALE_FACTOR = Dimensions.get('screen').height / 90;
 const DURATION = 600;
 
+const FADE_IN_MS  = 400;   // fade-in al inicio
+const HOLD_MS     = 2300;  // tiempo visible completo
+const FADE_OUT_MS = 300;   // fade-out al final
+// Total: 400 + 2300 + 300 = 3000 ms exactos
+
 export function AnimatedSplashOverlay() {
   const [visible, setVisible] = useState(true);
+  const opacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    // Fade in
+    Animated.timing(opacity, {
+      toValue: 1,
+      duration: FADE_IN_MS,
+      useNativeDriver: true,
+    }).start();
+
+    // Después del hold, fade out y esconder
+    const timer = setTimeout(() => {
+      Animated.timing(opacity, {
+        toValue: 0,
+        duration: FADE_OUT_MS,
+        useNativeDriver: true,
+      }).start(() => setVisible(false));
+    }, FADE_IN_MS + HOLD_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   if (!visible) return null;
 
-  const splashKeyframe = new Keyframe({
-    0: {
-      transform: [{ scale: INITIAL_SCALE_FACTOR }],
-      opacity: 1,
-    },
-    20: {
-      opacity: 1,
-    },
-    70: {
-      opacity: 0,
-      easing: Easing.elastic(0.7),
-    },
-    100: {
-      opacity: 0,
-      transform: [{ scale: 1 }],
-      easing: Easing.elastic(0.7),
-    },
-  });
-
   return (
-    <Animated.View
-      entering={splashKeyframe.duration(DURATION).withCallback((finished) => {
-        'worklet';
-        if (finished) {
-          scheduleOnRN(setVisible, false);
-        }
-      })}
-      style={styles.backgroundSolidColor}
-    />
+    <Animated.View style={[styles.splashBackground, { opacity }]}>
+      <Image
+        style={styles.splashImage}
+        source={require('@/assets/images/plantilla 1 alimentos nella .png')}
+        contentFit="fill"
+      />
+    </Animated.View>
   );
 }
 
@@ -96,6 +100,22 @@ export function AnimatedIcon() {
 }
 
 const styles = StyleSheet.create({
+  splashBackground: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: '#FBF3E2',
+    zIndex: 1000,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashImageWrapper: {
+    ...StyleSheet.absoluteFill,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  splashImage: {
+    width: '98%',
+    height: '100%',
+  },
   imageContainer: {
     justifyContent: 'center',
     alignItems: 'center',
