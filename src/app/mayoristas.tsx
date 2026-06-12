@@ -20,7 +20,8 @@ const GOLD = NellaColors.gold;
 const GRAY = NellaColors.lightGray;
 const BG   = '#FBF3E2';
 
-const WHATSAPP_NUMBER = '584120000000'; // reemplaza con el número real
+const WHATSAPP_NUMBER  = '584141569617';
+const WHATSAPP_MESSAGE = 'Hola%2C%20estoy%20interesado%20en%20ser%20distribuidor%20de%20Alimentos%20Nella';
 
 // ─── Beneficios ───────────────────────────────────────────────────────────────
 
@@ -99,7 +100,7 @@ export default function MayoristasScreen() {
   const insets = useSafeAreaInsets();
 
   const openWhatsApp = () => {
-    Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=Hola%2C%20me%20interesa%20información%20sobre%20distribución%20mayorista%20de%20Alimentos%20Nella`);
+    Linking.openURL(`https://wa.me/${WHATSAPP_NUMBER}?text=${WHATSAPP_MESSAGE}`);
   };
 
   return (
@@ -181,7 +182,7 @@ export default function MayoristasScreen() {
         </View>
 
         {/* ── CTAs ──────────────────────────────────────── */}
-        <TouchableOpacity style={s.goldBtn} activeOpacity={0.82}>
+        <TouchableOpacity style={s.goldBtn} activeOpacity={0.82} onPress={() => router.push('/mayoristas-form')}>
           <Ionicons name="mail-outline" size={20} color={RED} />
           <Text style={s.goldBtnText}>Solicitar información</Text>
         </TouchableOpacity>
