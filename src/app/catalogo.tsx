@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
+  Animated,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -15,6 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NellaColors, NellaFonts } from '@/constants/theme';
 import { onProductosChange } from '@/services/firestore';
+import { useFavoritos } from '@/hooks/useFavoritos';
 import { addToCart } from '@/store/cart';
 
 const RED  = NellaColors.red;
@@ -92,8 +94,15 @@ const arrow = StyleSheet.create({
 
 // ─── Tarjeta de producto ──────────────────────────────────────────────────────
 
-function ProductCard({ item }: { item: Product }) {
+type CardProps = {
+  item:      Product;
+  favoritos: Set<string>;
+  toggle:    (id: string, name: string) => Promise<void>;
+};
+
+function ProductCard({ item, favoritos, toggle }: CardProps) {
   const [added, setAdded] = useState(false);
+  const heartScale = useRef(new Animated.Value(1)).current;
 
   const handleAdd = () => {
     addToCart({
@@ -106,6 +115,16 @@ function ProductCard({ item }: { item: Product }) {
     setTimeout(() => setAdded(false), 900);
   };
 
+  const handleHeart = () => {
+    Animated.sequence([
+      Animated.spring(heartScale, { toValue: 1.45, useNativeDriver: true, speed: 50, bounciness: 12 }),
+      Animated.spring(heartScale, { toValue: 1.0,  useNativeDriver: true, speed: 20 }),
+    ]).start();
+    toggle(item.id, item.name);
+  };
+
+  const isFav = favoritos.has(item.id);
+
   return (
     <Pressable
       style={s.card}
@@ -114,6 +133,15 @@ function ProductCard({ item }: { item: Product }) {
       <View style={s.cardImgWrap}>
         <Image source={item.img} style={s.cardImg} contentFit="cover" />
       </View>
+      <Pressable style={s.heartBtn} onPress={handleHeart} hitSlop={8}>
+        <Animated.View style={{ transform: [{ scale: heartScale }] }}>
+          <Ionicons
+            name={isFav ? 'heart' : 'heart-outline'}
+            size={20}
+            color={isFav ? '#E53E3E' : '#FFF'}
+          />
+        </Animated.View>
+      </Pressable>
       <View style={s.cardBody}>
         <Text style={s.cardName} numberOfLines={2}>{item.name}</Text>
         <Text style={s.cardWeight}>{item.weight}</Text>
@@ -172,6 +200,7 @@ export default function CatalogoScreen() {
   const { subcat: subcatParam, title: titleParam } =
     useLocalSearchParams<{ subcat?: string; title?: string }>();
 
+  const { favoritos, toggle } = useFavoritos();
   const [filter, setFilter] = useState<Filter>('Todos');
   const [activeSubcat, setActiveSubcat] = useState<string | undefined>(subcatParam);
   const [products, setProducts] = useState<Product[]>(LOCAL_PRODUCTS);
@@ -258,7 +287,7 @@ export default function CatalogoScreen() {
           <View style={s.row}>
             {filtered.map((item) => (
               <View key={item.id} style={s.cardWrap}>
-                <ProductCard item={item} />
+                <ProductCard item={item} favoritos={favoritos} toggle={toggle} />
               </View>
             ))}
           </View>
@@ -412,6 +441,18 @@ const s = StyleSheet.create({
     lineHeight: 24,
     fontWeight: '700',
     includeFontPadding: false,
+  },
+  heartBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.30)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
   },
 
   empty: {

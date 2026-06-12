@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NellaColors, NellaFonts } from '@/constants/theme';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { useFavoritos } from '@/hooks/useFavoritos';
 import { logoutUser } from '@/services/auth';
 import { addToCart, useCart } from '@/store/cart';
 
@@ -346,6 +347,7 @@ const FEATURED = [
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { totalItems: cartCount } = useCart();
+  const { favoritos, toggle } = useFavoritos();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -438,36 +440,50 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.featScroll}
           >
-            {FEATURED.map((p) => (
-              <Pressable
-                key={p.id}
-                style={styles.prodCard}
-                onPress={() => router.push({ pathname: '/product-detail', params: { id: p.id } })}
-              >
-                <ImageBackground
-                  source={require('@/assets/images/fondo plantilla 1.png')}
-                  style={styles.prodCardBg}
-                  resizeMode="cover"
+            {FEATURED.map((p) => {
+              const isFav = favoritos.has(p.id);
+              return (
+                <Pressable
+                  key={p.id}
+                  style={styles.prodCard}
+                  onPress={() => router.push({ pathname: '/product-detail', params: { id: p.id } })}
                 >
-                  <Image source={p.img} style={styles.prodImg} contentFit="contain" />
-                  <View style={styles.prodFooter}>
-                    <Text style={styles.prodName} numberOfLines={2}>{p.name}</Text>
-                    <TouchableOpacity
-                      style={styles.prodAddBtn}
-                      activeOpacity={0.75}
-                      onPress={() => addToCart({
-                        id: p.id,
-                        name: p.name,
-                        price: parseFloat(p.price.replace('$', '')),
-                        img: p.img,
-                      })}
+                  <ImageBackground
+                    source={require('@/assets/images/fondo plantilla 1.png')}
+                    style={styles.prodCardBg}
+                    resizeMode="cover"
+                  >
+                    <Image source={p.img} style={styles.prodImg} contentFit="contain" />
+                    <Pressable
+                      style={styles.prodHeartBtn}
+                      onPress={() => toggle(p.id, p.name)}
+                      hitSlop={8}
                     >
-                      <Text style={styles.prodAddBtnText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </ImageBackground>
-              </Pressable>
-            ))}
+                      <Ionicons
+                        name={isFav ? 'heart' : 'heart-outline'}
+                        size={18}
+                        color={isFav ? '#E53E3E' : '#FFF'}
+                      />
+                    </Pressable>
+                    <View style={styles.prodFooter}>
+                      <Text style={styles.prodName} numberOfLines={2}>{p.name}</Text>
+                      <TouchableOpacity
+                        style={styles.prodAddBtn}
+                        activeOpacity={0.75}
+                        onPress={() => addToCart({
+                          id: p.id,
+                          name: p.name,
+                          price: parseFloat(p.price.replace('$', '')),
+                          img: p.img,
+                        })}
+                      >
+                        <Text style={styles.prodAddBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </ImageBackground>
+                </Pressable>
+              );
+            })}
           </ScrollView>
         </View>
       </ScrollView>
@@ -564,6 +580,16 @@ const styles = StyleSheet.create({
     shadowColor: RED, shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.35, shadowRadius: 6, elevation: 4,
   },
   prodAddBtnText: { color: '#FFF', fontSize: 20, lineHeight: 24, fontWeight: '700', includeFontPadding: false },
-
-
+  prodHeartBtn: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: 'rgba(0,0,0,0.30)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
 });
