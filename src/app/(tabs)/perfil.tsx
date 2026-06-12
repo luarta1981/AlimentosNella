@@ -1,8 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
+import { sendPasswordResetEmail } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Alert,
   ImageBackground,
@@ -16,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NellaColors, NellaFonts } from '@/constants/theme';
 import { useAuthUser } from '@/hooks/useAuthUser';
-import { db } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
 import { logoutUser } from '@/services/auth';
 
 type UserData = {
@@ -31,20 +32,22 @@ const RED  = NellaColors.red;
 const GOLD = NellaColors.gold;
 
 type MenuItem = {
-  icon: 'location-outline' | 'card-outline' | 'notifications-outline' |
-        'lock-closed-outline' | 'help-circle-outline' | 'log-out-outline';
-  label: string;
-  desc: string;
+  icon:   React.ComponentProps<typeof Ionicons>['name'];
+  label:  string;
+  desc:   string;
+  route?: string;
   danger?: boolean;
+  action?: () => void;
 };
 
 const MENU_ITEMS: MenuItem[] = [
-  { icon: 'location-outline',      label: 'Mis Direcciones',    desc: 'Gestiona tus direcciones de entrega' },
-  { icon: 'card-outline',          label: 'Métodos de Pago',    desc: 'Tarjetas y formas de pago guardadas' },
-  { icon: 'notifications-outline', label: 'Notificaciones',     desc: 'Alertas de pedidos y promociones' },
-  { icon: 'lock-closed-outline',   label: 'Cambiar Contraseña', desc: 'Actualiza tu contraseña de acceso' },
-  { icon: 'help-circle-outline',   label: 'Ayuda y Soporte',    desc: 'Preguntas frecuentes y contacto' },
-  { icon: 'log-out-outline',       label: 'Cerrar Sesión',      desc: 'Salir de tu cuenta Nella', danger: true },
+  { icon: 'person-outline',        label: 'Editar Perfil',      desc: 'Cambiar nombre, teléfono y dirección', route: '/perfil-edit'          },
+  { icon: 'location-outline',      label: 'Mis Direcciones',    desc: 'Gestiona tus direcciones de entrega',  route: '/perfil-direcciones'   },
+  { icon: 'card-outline',          label: 'Métodos de Pago',    desc: 'Formas de pago preferidas',            route: '/perfil-pagos'         },
+  { icon: 'settings-outline',      label: 'Configuración',      desc: 'Notificaciones y preferencias',        route: '/perfil-configuracion' },
+  { icon: 'lock-closed-outline',   label: 'Cambiar Contraseña', desc: 'Actualiza tu contraseña de acceso'                                    },
+  { icon: 'help-circle-outline',   label: 'Ayuda y Soporte',    desc: 'Preguntas frecuentes y contacto'                                      },
+  { icon: 'log-out-outline',       label: 'Cerrar Sesión',      desc: 'Salir de tu cuenta Nella',             danger: true                   },
 ];
 
 function formatDate(ts: any): string {
@@ -70,6 +73,36 @@ export default function PerfilScreen() {
   const phone       = userData?.phone       || '';
   const address     = userData?.address     || '';
   const memberSince = userData?.createdAt   ? `Miembro desde ${formatDate(userData.createdAt)}` : 'Miembro Nella';
+
+  const handleChangePassword = () => {
+    const emailAddr = user?.email;
+    if (!emailAddr) return;
+    Alert.alert(
+      'Cambiar contraseña',
+      `Te enviaremos un enlace a ${emailAddr} para restablecer tu contraseña.`,
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        {
+          text: 'Enviar enlace',
+          onPress: async () => {
+            try {
+              await sendPasswordResetEmail(auth, emailAddr);
+              Alert.alert('Correo enviado', 'Revisa tu bandeja de entrada.');
+            } catch {
+              Alert.alert('Error', 'No se pudo enviar el correo. Intenta de nuevo.');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  const handleMenuPress = (item: MenuItem) => {
+    if (item.danger)                         { handleLogout(); return; }
+    if (item.label === 'Cambiar Contraseña') { handleChangePassword(); return; }
+    if (item.label === 'Ayuda y Soporte')    { return; }
+    if (item.route)                          { router.push(item.route as any); }
+  };
 
   const handleLogout = () => {
     Alert.alert(
@@ -117,7 +150,7 @@ export default function PerfilScreen() {
             <View style={s.avatarCircle}>
               <Ionicons name="person" size={52} color={GOLD} />
             </View>
-            <Pressable style={s.editBadge}>
+            <Pressable style={s.editBadge} onPress={() => router.push('/perfil-edit')} hitSlop={8}>
               <Ionicons name="camera" size={14} color="#FFF" />
             </Pressable>
           </View>
@@ -172,7 +205,7 @@ export default function PerfilScreen() {
           {MENU_ITEMS.map((item, i) => (
             <Pressable
               key={item.label}
-              onPress={item.danger ? handleLogout : undefined}
+              onPress={() => handleMenuPress(item)}
               style={({ pressed }) => [
                 s.menuItem,
                 i === 0 && s.menuItemFirst,
