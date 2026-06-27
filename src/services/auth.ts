@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signOut,
@@ -23,6 +24,7 @@ export async function registerUser(
   const user = credential.user;
 
   await updateProfile(user, { displayName });
+  await sendEmailVerification(user);
 
   await setDoc(doc(db, 'usuarios', user.uid), {
     uid:         user.uid,
@@ -62,6 +64,14 @@ export async function resetPassword(email: string): Promise<void> {
 
 export function onAuthChange(callback: (user: User | null) => void) {
   return onAuthStateChanged(auth, callback);
+}
+
+// ─── Reenviar verificación de correo ─────────────────────────────────────────
+
+export async function resendVerificationEmail(): Promise<void> {
+  const user = auth.currentUser;
+  if (!user) throw new Error('No hay sesión activa.');
+  await sendEmailVerification(user);
 }
 
 // ─── Usuario actual ───────────────────────────────────────────────────────────

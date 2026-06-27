@@ -19,6 +19,7 @@ import Cupones from './pages/Cupones';
 import Favoritos from './pages/Favoritos';
 import GestionEntregas from './pages/GestionEntregas';
 import PedidosProgramados from './pages/PedidosProgramados';
+import InformacionBancaria from './pages/InformacionBancaria';
 
 // ─── Auth context ─────────────────────────────────────────────────────────────
 
@@ -78,6 +79,7 @@ export default function App() {
                     <Route path="notificaciones" element={<NotificacionesMasivas />} />
                     <Route path="cupones"       element={<Cupones />}             />
                     <Route path="favoritos"     element={<Favoritos />}           />
+                    <Route path="bancaria"      element={<InformacionBancaria />} />
                     <Route path="*"             element={<Navigate to="/" replace />} />
                   </Routes>
                 </Layout>

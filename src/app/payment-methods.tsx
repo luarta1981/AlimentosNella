@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { collection, onSnapshot, query, where } from 'firebase/firestore';
+import { useState, useEffect } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -17,8 +18,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { NellaColors, NellaFonts } from '@/constants/theme';
 import { useAuthUser } from '@/hooks/useAuthUser';
+import { db } from '@/lib/firebase';
 import { clearCart, useCart } from '@/store/cart';
 import { crearPedido, registrarUsoCupon } from '@/services/firestore';
+
+type CuentaBancaria = {
+  id: string;
+  tipo: 'cuenta' | 'transferencia' | 'pago_movil' | 'zelle';
+  // cuenta + transferencia
+  banco?: string;
+  tipoCuenta?: string;
+  numeroCuenta?: string;
+  titular?: string;
+  cedulaRif?: string;
+  // pago_movil
+  telefono?: string;
+  cedula?: string;
+  // zelle
+  emailOTelefono?: string;
+  nombre?: string;
+};
 
 const RED  = NellaColors.red;
 const GOLD = NellaColors.gold;
@@ -121,8 +140,17 @@ export default function PaymentMethodsScreen() {
   const insets    = useSafeAreaInsets();
   const { user }            = useAuthUser();
   const { items, coupon }   = useCart();
-  const [selected, setSelected] = useState<string | null>(null);
-  const [saving, setSaving]     = useState(false);
+  const [selected, setSelected]       = useState<string | null>(null);
+  const [saving, setSaving]           = useState(false);
+  const [cuentas, setCuentas]         = useState<CuentaBancaria[]>([]);
+
+  useEffect(() => {
+    const q = query(collection(db, 'cuentas_bancarias'), where('activo', '==', true));
+    const unsub = onSnapshot(q, (snap) => {
+      setCuentas(snap.docs.map((d) => ({ id: d.id, ...d.data() } as CuentaBancaria)));
+    });
+    return unsub;
+  }, []);
 
   const subtotal = items.reduce((sum, i) => sum + i.price * i.qty, 0);
   const discount = coupon
@@ -236,6 +264,87 @@ export default function PaymentMethodsScreen() {
             );
           })}
         </View>
+
+        {/* Datos para Transferencia Bancaria */}
+        {selected === 'transfer' && cuentas.filter((c) => c.tipo === 'transferencia').length > 0 && (
+          <View style={s.bankInfoCard}>
+            <View style={s.bankInfoHeader}>
+              <Ionicons name="swap-horizontal-outline" size={18} color="#1D4ED8" />
+              <Text style={[s.bankInfoTitle, { color: '#1D4ED8' }]}>Datos para Transferencia</Text>
+            </View>
+            {cuentas.filter((c) => c.tipo === 'transferencia').map((c, i) => (
+              <View key={c.id}>
+                {i > 0 && <View style={s.bankSep} />}
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Banco</Text>
+                  <Text style={s.bankValue}>{c.banco}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>N° de cuenta</Text>
+                  <Text style={[s.bankValue, s.bankMono]}>{c.numeroCuenta}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Titular</Text>
+                  <Text style={s.bankValue}>{c.titular}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Cédula / RIF</Text>
+                  <Text style={[s.bankValue, s.bankMono]}>{c.cedulaRif}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Datos para Pago Móvil */}
+        {selected === 'c2p' && cuentas.filter((c) => c.tipo === 'pago_movil').length > 0 && (
+          <View style={s.bankInfoCard}>
+            <View style={s.bankInfoHeader}>
+              <Ionicons name="phone-portrait-outline" size={18} color="#7C3AED" />
+              <Text style={[s.bankInfoTitle, { color: '#7C3AED' }]}>Datos para Pago Móvil</Text>
+            </View>
+            {cuentas.filter((c) => c.tipo === 'pago_movil').map((c, i) => (
+              <View key={c.id}>
+                {i > 0 && <View style={s.bankSep} />}
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Banco</Text>
+                  <Text style={s.bankValue}>{c.banco}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Teléfono</Text>
+                  <Text style={[s.bankValue, s.bankMono]}>{c.telefono}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Cédula</Text>
+                  <Text style={[s.bankValue, s.bankMono]}>{c.cedula}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Datos para Zelle */}
+        {selected === 'zelle' && cuentas.filter((c) => c.tipo === 'zelle').length > 0 && (
+          <View style={s.bankInfoCard}>
+            <View style={s.bankInfoHeader}>
+              <Ionicons name="globe-outline" size={18} color="#059669" />
+              <Text style={[s.bankInfoTitle, { color: '#059669' }]}>Datos para Zelle</Text>
+            </View>
+            {cuentas.filter((c) => c.tipo === 'zelle').map((c, i) => (
+              <View key={c.id}>
+                {i > 0 && <View style={s.bankSep} />}
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Email / Teléfono</Text>
+                  <Text style={[s.bankValue, s.bankMono]}>{c.emailOTelefono}</Text>
+                </View>
+                <View style={s.bankRow}>
+                  <Text style={s.bankLabel}>Nombre</Text>
+                  <Text style={s.bankValue}>{c.nombre}</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
 
         {/* Mensaje de seguridad */}
         <View style={s.securityBadge}>
@@ -398,6 +507,58 @@ const s = StyleSheet.create({
   radioDot: {
     width: 11, height: 11, borderRadius: 5.5,
     backgroundColor: RED,
+  },
+
+  // Info bancaria
+  bankInfoCard: {
+    backgroundColor: '#FBF3E2',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#C8901A',
+    padding: 16,
+    gap: 10,
+  },
+  bankInfoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+    paddingBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#C8901A33',
+  },
+  bankInfoTitle: {
+    fontFamily: NellaFonts.bold,
+    fontSize: 15,
+    color: RED,
+  },
+  bankRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  bankLabel: {
+    fontFamily: NellaFonts.italic,
+    fontSize: 13,
+    color: '#6B7280',
+    flex: 1,
+  },
+  bankValue: {
+    fontFamily: NellaFonts.bold,
+    fontSize: 14,
+    color: '#1F2937',
+    flex: 2,
+    textAlign: 'right',
+  },
+  bankMono: {
+    fontFamily: 'Courier New',
+    letterSpacing: 0.5,
+  },
+  bankSep: {
+    height: 1,
+    backgroundColor: '#C8901A22',
+    marginVertical: 10,
   },
 
   // Seguridad

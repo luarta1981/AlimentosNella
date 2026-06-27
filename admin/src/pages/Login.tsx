@@ -1,4 +1,4 @@
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../lib/firebase';
@@ -13,11 +13,43 @@ const ERROR_MAP: Record<string, string> = {
 
 export default function Login() {
   const navigate = useNavigate();
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState('');
-  const [showPw, setShowPw]     = useState(false);
+  const [email, setEmail]           = useState('');
+  const [password, setPassword]     = useState('');
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState('');
+  const [showPw, setShowPw]           = useState(false);
+  const [showReset, setShowReset]     = useState(false);
+  const [resetEmail, setResetEmail]   = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetMsg, setResetMsg]       = useState('');
+  const [resetError, setResetError]   = useState('');
+
+  const handleReset = async () => {
+    setResetMsg('');
+    setResetError('');
+    if (!resetEmail.trim()) {
+      setResetError('Ingresa tu correo electrónico.');
+      return;
+    }
+    setResetLoading(true);
+    try {
+      await sendPasswordResetEmail(auth, resetEmail.trim());
+      setResetMsg('Se envió un enlace de recuperación a ' + resetEmail.trim());
+    } catch (err: any) {
+      const code = err?.code ?? '';
+      if (code === 'auth/user-not-found') {
+        setResetError('No existe una cuenta con ese correo.');
+      } else if (code === 'auth/invalid-email') {
+        setResetError('Correo electrónico inválido.');
+      } else if (code === 'auth/too-many-requests') {
+        setResetError('Demasiados intentos. Intenta más tarde.');
+      } else {
+        setResetError('No se pudo enviar el correo. Intenta de nuevo.');
+      }
+    } finally {
+      setResetLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,6 +114,44 @@ export default function Login() {
             {loading ? 'Iniciando sesión…' : 'Iniciar Sesión'}
           </button>
         </form>
+
+        {/* ── Recuperar contraseña ── */}
+        <div style={{ marginTop: 24, borderTop: '1px solid #E5E7EB', paddingTop: 20 }}>
+          <button
+            type="button"
+            onClick={() => { setShowReset((v) => !v); setResetMsg(''); setResetError(''); }}
+            style={{ background: 'none', border: 'none', color: '#E67E22', cursor: 'pointer', fontSize: 14, textDecoration: 'underline', padding: 0, display: 'block', margin: '0 auto' }}
+          >
+            ¿Olvidaste tu contraseña?
+          </button>
+
+          {showReset && (
+            <div style={{ marginTop: 14, display: 'flex', flexDirection: 'column', gap: 10 }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label>Correo para recuperación</label>
+                <input
+                  type="email"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  autoComplete="email"
+                  onKeyDown={(e) => e.key === 'Enter' && handleReset()}
+                />
+              </div>
+              <button
+                type="button"
+                className="btn btn-outline"
+                onClick={handleReset}
+                disabled={resetLoading}
+                style={{ width: '100%' }}
+              >
+                {resetLoading ? 'Enviando…' : 'Enviar enlace de recuperación'}
+              </button>
+              {resetMsg   && <div style={{ color: '#16a34a', background: '#f0fdf4', border: '1px solid #bbf7d0', borderRadius: 6, padding: '10px 14px', fontSize: 13, textAlign: 'center' }}>{resetMsg}</div>}
+              {resetError && <div className="login-error">{resetError}</div>}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

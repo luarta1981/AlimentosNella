@@ -25,7 +25,7 @@ export default function WelcomeScreen() {
     );
   }
 
-  if (user) return <Redirect href="/(tabs)/home" />;
+  if (user) return <Redirect href={user.emailVerified ? '/(tabs)/home' : '/verify-email'} />;
 
   return (
     <SafeAreaView style={styles.container} edges={['bottom', 'left', 'right']}>

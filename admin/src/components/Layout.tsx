@@ -26,6 +26,8 @@ const NAV: NavEntry[] = [
   { to: '/notificaciones', icon: '🔔', label: 'Notificaciones'   },
   { to: '/cupones',      icon: '🎟️', label: 'Cupones'            },
   { to: '/favoritos',    icon: '❤️', label: 'Productos Favoritos' },
+  { divider: 'Configuración'                                        },
+  { to: '/bancaria',     icon: '🏦', label: 'Info. Bancaria'       },
 ];
 
 const PAGE_TITLES: Record<string, string> = {
@@ -43,6 +45,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/notificaciones': 'Notificaciones Masivas',
   '/cupones':        'Cupones de Descuento',
   '/favoritos':      'Productos Favoritos',
+  '/bancaria':       'Información Bancaria',
 };
 
 export default function Layout({ children }: { children: React.ReactNode }) {

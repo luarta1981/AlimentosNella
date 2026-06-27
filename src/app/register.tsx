@@ -123,7 +123,7 @@ export default function RegisterScreen() {
           address: values.direccion?.trim() || undefined,
         }
       );
-      router.replace('/(tabs)/home');
+      router.replace('/verify-email');
     } catch (e: any) {
       setError(authErrorMessage(e.code ?? ''));
     } finally {

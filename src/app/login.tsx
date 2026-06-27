@@ -47,7 +47,7 @@ export default function LoginScreen() {
   const [error, setError]               = useState('');
 
   if (authLoading) return null;
-  if (user) return <Redirect href="/(tabs)/home" />;
+  if (user) return <Redirect href={user.emailVerified ? '/(tabs)/home' : '/verify-email'} />;
 
   const handleForgotPassword = async () => {
     if (!email.trim()) {
@@ -83,8 +83,12 @@ export default function LoginScreen() {
     }
     setLoading(true);
     try {
-      await loginUser(email.trim().toLowerCase(), password);
-      router.replace('/(tabs)/home');
+      const loggedIn = await loginUser(email.trim().toLowerCase(), password);
+      if (loggedIn.emailVerified) {
+        router.replace('/(tabs)/home');
+      } else {
+        router.replace('/verify-email');
+      }
     } catch (e: any) {
       setError(authErrorMessage(e.code ?? ''));
     } finally {
